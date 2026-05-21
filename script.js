@@ -117,4 +117,55 @@ if(document.getElementById("particles-js")){
     },
     retina_detect:true
   });
+}/* ENVIO DO FORMULÁRIO COM TRIAGEM DE IA */
+const contactForm = document.querySelector(".contact-form");
+
+if(contactForm) {
+  contactForm.addEventListener("submit", async (e) => {
+    e.preventDefault(); // Impede o envio tradicional e o recarregamento da página
+
+    const button = contactForm.querySelector("button");
+    const originalButtonText = button.textContent;
+    button.textContent = "Analisando com IA...";
+    button.disabled = true;
+
+    // Captura os dados dos inputs
+    const formData = {
+      nome: contactForm.querySelector('input[name="nome"]').value,
+      email: contactForm.querySelector('input[name="email"]').value,
+      assunto: contactForm.querySelector('input[name="assunto"]').value,
+      mensagem: contactForm.querySelector('textarea[name="mensagem"]').value
+    };
+
+    try {
+      // SUBSTITUA PELA URL QUE A CLOUDFLARE TE DER AO PUBLICAR O WORKER
+      const workerUrl = "https://ls-informatica-api.SEUSUBDOMINIO.workers.dev";
+
+      const response = await fetch(workerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if(result.success) {
+        // Alerta profissional de sucesso (Você pode trocar por um modal customizado na tela)
+        alert(`Sucesso!\n\n${result.message}\n\nPré-análise gerada: ${result.analise}`);
+        contactForm.reset(); // Limpa o formulário
+      } else {
+        alert("Ocorreu um erro ao processar. Tente novamente ou nos chame no WhatsApp.");
+      }
+
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+      alert("Erro de conexão. Verifique sua internet ou tente mais tarde.");
+    } finally {
+      // Restaura o botão ao estado original
+      button.textContent = originalButtonText;
+      button.disabled = false;
+    }
+  });
 }
